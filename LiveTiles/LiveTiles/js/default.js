@@ -1,0 +1,110 @@
+﻿// For an introduction to the Blank template, see the following documentation:
+// http://go.microsoft.com/fwlink/?LinkId=232509
+(function () {
+	"use strict";
+
+	var app = WinJS.Application;
+	var activation = Windows.ApplicationModel.Activation;
+
+	app.onactivated = function (args) {
+		if (args.detail.kind === activation.ActivationKind.launch) {
+			if (args.detail.previousExecutionState !== activation.ApplicationExecutionState.terminated) {
+				// TODO: This application has been newly launched. Initialize your application here.
+			} else {
+				// TODO: This application has been reactivated from suspension.
+				// Restore application state here.
+			}
+			args.setPromise(WinJS.UI.processAll());
+
+			registerTask();
+		}
+	};
+
+	app.oncheckpoint = function (args) {
+		// TODO: This application is about to be suspended. Save any state that needs to persist across suspensions here.
+		// You might use the WinJS.Application.sessionState object, which is automatically saved and restored across suspension.
+		// If you need to complete an asynchronous operation before your application is suspended, call args.setPromise().
+	};
+
+	app.start();
+
+	setTile("New Tile", 10);
+
+	function registerTask() {    
+	    var taskRegistered = false;
+	    var exampleTaskName = "backgroundTask";
+
+	    var background = Windows.ApplicationModel.Background;
+	    var iter = background.BackgroundTaskRegistration.allTasks.first();
+
+	    while (iter.hasCurrent) {
+
+	        var task = iter.current.value;
+
+	        if (task.name === exampleTaskName) {
+
+	            taskRegistered = true;
+	            break;
+	        }
+
+	        iter.moveNext();
+	    }
+
+	    if (taskRegistered != true) {
+	        var builder = new Windows.ApplicationModel.Background.BackgroundTaskBuilder();
+	        var trigger = new Windows.ApplicationModel.Background.TimeTrigger(15, true);
+
+	        builder.name = exampleTaskName;
+	        builder.taskEntryPoint = "js\\backgroundTask.js";
+	        builder.setTrigger(trigger);
+
+	        builder.addCondition(new Windows.ApplicationModel.Background.SystemCondition(Windows.ApplicationModel.Background.SystemConditionType.internetAvailable));
+	        var task = builder.register();
+	        task.addEventListener("completed", backgroundTaskCompleted);
+	    }
+	}
+
+	function backgroundTaskCompleted(args) {
+	    try {            
+	        var currentDate = new Date()
+
+	        setTile("Tile from Background task", currentDate.getMinutes());
+	    } catch (ex) {
+	        
+	    }
+	}
+
+	function setTile(tileText, badgeValue) {
+
+	    var notifications = Windows.UI.Notifications;
+
+	    // Build Badge
+	    var type = notifications.BadgeTemplateType.badgeNumber;
+	    var xml = notifications.BadgeUpdateManager.getTemplateContent(type);
+
+	    // update element
+	    var elements = xml.getElementsByTagName("badge");
+
+	    var element = elements[0];
+	    element.setAttribute("value", badgeValue);
+
+	    // Create badge
+	    var updator = notifications.BadgeNotification(xml);
+	    notifications.BadgeUpdateManager.createBadgeUpdaterForApplication().update(updator);
+
+        // Create Tile template
+	    var template = notifications.TileTemplateType.tileSquare150x150PeekImageAndText01;
+	    var tileXml = notifications.TileUpdateManager.getTemplateContent(template);
+	    
+	    var tileTextAttributes = tileXml.getElementsByTagName("text");
+	    tileTextAttributes[0].appendChild(tileXml.createTextNode(tileText));
+
+	    var tileImageAttributes = tileXml.getElementsByTagName("image");
+	    tileImageAttributes[0].setAttribute("src", "ms-appx:///images/tileImage.png");
+	    tileImageAttributes[0].setAttribute("alt", "red graphic");
+
+	    var tileNotification = new notifications.TileNotification(tileXml);
+
+	    notifications.TileUpdateManager.createTileUpdaterForApplication().update(tileNotification);
+	}
+})();
