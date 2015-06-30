@@ -29,7 +29,7 @@
   <Applications>
     <Application
       Id="App"
-      StartPage="default.html">
+      StartPage="http://dses056/MyWebApp/">
 
       <uap:VisualElements
         DisplayName="LiveTiles"
@@ -41,7 +41,11 @@
         <uap:SplashScreen Image="images\splashscreen.png" />
 
       </uap:VisualElements>
-    
+
+      <uap:ApplicationContentUriRules>
+        <uap:Rule Type="include" Match="http://dses056/MyWebApp/" WindowsRuntimeAccess="all"/>
+      </uap:ApplicationContentUriRules>
+      
       <Extensions>
         <Extension Category="windows.backgroundTasks" StartPage="js\backgroundTask.js">
           <BackgroundTasks>
